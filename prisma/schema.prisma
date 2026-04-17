@@ -29,6 +29,7 @@ model Product {
   colors        String?
   features      String?
   imageUrl      String?
+  sizeChartUrl  String?
   categoryId    Int
   category      Category  @relation(fields: [categoryId], references: [id])
 }

@@ -55,13 +55,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       <section className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {cat.products.map((product, i) => (
-            <div
+            <Link
               key={i}
-              className="bg-white/5 border border-white/10 rounded-lg p-5 hover:border-[#4a7c59]/50 transition-all duration-200 flex flex-col"
+              href={`/products/${cat.slug}/${product.id}`}
+              className="bg-white/5 border border-white/10 rounded-lg p-5 hover:border-[#4a7c59]/50 transition-all duration-200 flex flex-col cursor-pointer"
             >
+              {/* Image */}
+              {product.imageUrl && (
+                <div className="mb-3 rounded-lg overflow-hidden bg-white/5 h-40 flex items-center justify-center">
+                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+
               {/* Discount Badge */}
               {product.discount && (
-                <div className="self-start mb-3">
+                <div className="self-start mb-2">
                   <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
                     -{product.discount}%
                   </span>
@@ -69,9 +77,23 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
               )}
 
               {/* Product Name */}
-              <h3 className="text-white font-semibold text-sm leading-snug mb-4 flex-1">
+              <h3 className="text-white font-semibold text-sm leading-snug mb-2">
                 {product.name}
               </h3>
+
+              {/* Description */}
+              {product.description && (
+                <p className="text-white/40 text-xs leading-relaxed mb-3 line-clamp-3 flex-1">
+                  {product.description.split('\n')[0]}
+                </p>
+              )}
+
+              {/* Details */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {product.sizes && <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded">📏 {product.sizes}</span>}
+                {product.colors && <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded">🎨 {product.colors}</span>}
+                {product.material && <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded">🧵 {product.material}</span>}
+              </div>
 
               {/* Price */}
               <div className="mt-auto">
@@ -85,16 +107,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
                 </p>
               </div>
 
-              {/* Order via Line */}
-              <a
-                href="https://line.me/R/ti/p/@bg1inter"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 block text-center bg-[#06c755] hover:opacity-90 text-white text-xs font-bold py-2 px-4 rounded-full transition-opacity"
-              >
-                สั่งซื้อผ่าน Line
-              </a>
-            </div>
+              <div className="mt-4 text-center text-[#4a7c59] text-xs font-medium">
+                คลิกดูรายละเอียด →
+              </div>
+            </Link>
           ))}
         </div>
       </section>

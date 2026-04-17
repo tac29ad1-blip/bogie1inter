@@ -1,4 +1,5 @@
 export interface Product {
+  id?: number;
   name: string;
   price: number;
   originalPrice?: number;
@@ -9,6 +10,7 @@ export interface Product {
   colors?: string;
   features?: string;
   imageUrl?: string;
+  sizeChartUrl?: string;
 }
 
 export interface Category {
@@ -332,6 +334,7 @@ function mapCategory(c: PrismaCategoryWithProducts): Category {
     icon: c.icon,
     description: c.description,
     products: c.products.map((p) => ({
+      id: p.id,
       name: p.name,
       price: p.price,
       originalPrice: p.originalPrice ?? undefined,
@@ -342,6 +345,7 @@ function mapCategory(c: PrismaCategoryWithProducts): Category {
       colors: p.colors ?? undefined,
       features: p.features ?? undefined,
       imageUrl: p.imageUrl ?? undefined,
+      sizeChartUrl: p.sizeChartUrl ?? undefined,
     })),
   };
 }
@@ -352,6 +356,29 @@ export async function getCategories(): Promise<Category[]> {
     orderBy: { id: 'asc' },
   });
   return rows.map(mapCategory);
+}
+
+export async function getProductById(id: number): Promise<(Product & { categorySlug: string }) | null> {
+  const p = await prisma.product.findUnique({
+    where: { id },
+    include: { category: true },
+  });
+  if (!p) return null;
+  return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    originalPrice: p.originalPrice ?? undefined,
+    discount: p.discount ?? undefined,
+    description: p.description ?? undefined,
+    material: p.material ?? undefined,
+    sizes: p.sizes ?? undefined,
+    colors: p.colors ?? undefined,
+    features: p.features ?? undefined,
+    imageUrl: p.imageUrl ?? undefined,
+    sizeChartUrl: p.sizeChartUrl ?? undefined,
+    categorySlug: p.category.slug,
+  };
 }
 
 export async function getCategoryBySlugFromDB(slug: string): Promise<Category | null> {
