@@ -1,6 +1,7 @@
 const productCategories = [
   {
     icon: "👢",
+    slug: "shoes",
     name: "รองเท้าคอมแบท",
     nameEn: "Combat Boots",
     description:
@@ -8,6 +9,7 @@ const productCategories = [
   },
   {
     icon: "👕",
+    slug: "shirts",
     name: "เสื้อผ้ายุทธวิธี",
     nameEn: "Combat Shirts",
     description:
@@ -15,6 +17,7 @@ const productCategories = [
   },
   {
     icon: "👖",
+    slug: "pants",
     name: "กางเกงยุทธวิธี",
     nameEn: "Tactical Pants",
     description:
@@ -22,6 +25,7 @@ const productCategories = [
   },
   {
     icon: "🔧",
+    slug: "belts",
     name: "เข็มขัดและอุปกรณ์",
     nameEn: "Belts & Holsters",
     description:
@@ -29,6 +33,7 @@ const productCategories = [
   },
   {
     icon: "🎒",
+    slug: "backpacks",
     name: "กระเป๋ายุทธวิธี",
     nameEn: "Tactical Bags",
     description:
@@ -36,12 +41,15 @@ const productCategories = [
   },
   {
     icon: "⚙️",
+    slug: "accessories",
     name: "อุปกรณ์เสริม",
     nameEn: "Accessories",
     description:
       "อุปกรณ์เสริมยุทธวิธีครบครัน ไม่ว่าจะเป็นถุงมือ หมวก สายรัด แพตช์ และอื่นๆ อีกมากมาย",
   },
 ];
+
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -146,9 +154,10 @@ export default function HomePage() {
           {/* Product cards grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {productCategories.map((product) => (
-              <div
+              <Link
                 key={product.name}
-                className="group relative bg-[#141414] border border-[#2e2e2e] rounded-lg p-6 hover:border-[#4a7c59] transition-all duration-300 hover:shadow-lg hover:shadow-[#4a7c59]/10 cursor-pointer"
+                href={`/products/${product.slug}`}
+                className="group relative bg-[#141414] border border-[#2e2e2e] rounded-lg p-6 hover:border-[#4a7c59] transition-all duration-300 hover:shadow-lg hover:shadow-[#4a7c59]/10 cursor-pointer block"
               >
                 {/* Top accent line on hover */}
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#4a7c59] rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -174,7 +183,7 @@ export default function HomePage() {
                   <span>ดูสินค้า</span>
                   <span>→</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
