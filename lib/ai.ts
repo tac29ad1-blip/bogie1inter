@@ -68,6 +68,54 @@ export async function getAIResponse(userId: string, userMessage: string): Promis
   return assistantMessage;
 }
 
+// วิเคราะห์รูปภาพที่ลูกค้าส่งมา ใช้ Claude Vision
+export async function getAIResponseWithImage(
+  userId: string,
+  imageBase64: string,
+  mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+): Promise<string> {
+  const history = getHistory(userId);
+  const systemPrompt = await getSystemPrompt();
+
+  // สร้าง messages array รวม history เดิม + รูปภาพใหม่
+  const messages: Anthropic.MessageParam[] = [
+    ...history.map(h => ({ role: h.role, content: h.content as string })),
+    {
+      role: 'user' as const,
+      content: [
+        {
+          type: 'image' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: mediaType,
+            data: imageBase64,
+          },
+        },
+        {
+          type: 'text' as const,
+          text: 'ลูกค้าส่งรูปสินค้ามาให้ดูค่ะ ช่วยดูว่าเป็นสินค้าประเภทไหน ถ้าเป็นสินค้าของ Bogie1 Inter ให้บอกชื่อรุ่นและราคาได้เลย ถ้าไม่ใช่สินค้าของร้านให้แนะนำสินค้าที่ใกล้เคียงจากรายการของร้านค่ะ',
+        },
+      ],
+    },
+  ];
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages,
+  });
+
+  const assistantMessage = (response.content[0] as { type: string; text: string }).text;
+
+  // บันทึก history เป็น text (รูปภาพไม่เก็บ)
+  history.push({ role: 'user', content: '[ลูกค้าส่งรูปสินค้า]' });
+  history.push({ role: 'assistant', content: assistantMessage });
+  trimHistory(history);
+
+  return assistantMessage;
+}
+
 export function clearHistory(userId: string): void {
   conversationHistory.delete(userId);
 }

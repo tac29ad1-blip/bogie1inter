@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import axios from 'axios';
-import { getAIResponse, clearHistory } from '@/lib/ai';
+import { getAIResponse, getAIResponseWithImage, clearHistory } from '@/lib/ai';
 import { getEnvVar } from '@/lib/ai';
 import { hasSizeColorQuery, findProductSizeChart } from '@/lib/products';
 
@@ -140,14 +140,42 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     if (event.type !== 'message') continue;
 
     const message = event.message as Record<string, unknown> | undefined;
-    if (message?.type !== 'text') continue;
+    if (message?.type !== 'text' && message?.type !== 'image') continue;
 
     const source = event.source as Record<string, string> | undefined;
     const userId = source?.userId;
-    const userText = message.text as string;
+    const userText = (message.text as string) || '';
     const replyToken = event.replyToken as string;
 
-    if (!userId || !userText || !replyToken) continue;
+    if (!userId || !replyToken) continue;
+
+    // จัดการรูปภาพที่ลูกค้าส่งมา
+    if (message?.type === 'image') {
+      const messageId = message.id as string;
+      try {
+        // ดาวน์โหลดรูปจาก LINE Data API
+        const channelAccessToken = getEnvVar('LINE_CHANNEL_ACCESS_TOKEN');
+        const imgRes = await axios.get(
+          `https://api-data.line.me/v2/bot/message/${messageId}/content`,
+          { headers: { Authorization: `Bearer ${channelAccessToken}` }, responseType: 'arraybuffer' }
+        );
+        const imageBase64 = Buffer.from(imgRes.data).toString('base64');
+        const contentType = (imgRes.headers['content-type'] as string) || 'image/jpeg';
+        const mediaType = (['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(contentType)
+          ? contentType
+          : 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+        const reply = await getAIResponseWithImage(`line_${userId}`, imageBase64, mediaType);
+        await replyMessage(replyToken, reply);
+      } catch (err: unknown) {
+        const error = err as Error;
+        console.error('[Line] Image processing error:', error.message);
+        await replyMessage(replyToken, 'ขอโทษค่ะ ไม่สามารถวิเคราะห์รูปภาพได้ในขณะนี้ รบกวนอธิบายสินค้าที่ต้องการเป็นข้อความได้เลยนะคะ 🙏');
+      }
+      continue;
+    }
+
+    if (!userText) continue;
 
     console.log(`[Line] Message from ${userId}: ${userText}`);
 
