@@ -389,3 +389,41 @@ export async function getCategoryBySlugFromDB(slug: string): Promise<Category | 
   if (!c) return null;
   return mapCategory(c);
 }
+
+// คำที่บ่งบอกว่าลูกค้าถามเรื่อง ไซส์/สี/ขนาด/วัสดุ
+const SIZE_KEYWORDS = [
+  'ไซส์', 'ขนาด', 'size', 'สี', 'color', 'วัสดุ', 'material',
+  'ตารางไซส์', 'เบอร์', 'หลวม', 'คับ', 'พอดี', 'ยาว', 'สั้น',
+];
+
+export function hasSizeColorQuery(text: string): boolean {
+  const lower = text.toLowerCase();
+  return SIZE_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+/**
+ * ค้นหาสินค้าที่ตรงกับข้อความของลูกค้า แล้วคืน sizeChartUrl ถ้ามี
+ * ใช้สำหรับส่งรูปตารางไซส์ให้ลูกค้าอัตโนมัติ
+ */
+export async function findProductSizeChart(userText: string): Promise<string | null> {
+  // แยกคำสำคัญจากข้อความ (ตัดคำสั้น < 3 ตัวอักษรออก)
+  const words = userText.split(/[\s,/]+/).filter(w => w.length >= 3);
+  if (words.length === 0) return null;
+
+  // ค้นหา product ที่ชื่อตรงกับคำในข้อความ
+  for (const word of words) {
+    const products = await prisma.product.findMany({
+      where: {
+        name: { contains: word, mode: 'insensitive' },
+        sizeChartUrl: { not: null },
+      },
+      select: { id: true, name: true, sizeChartUrl: true },
+      take: 1,
+    });
+    if (products.length > 0 && products[0].sizeChartUrl) {
+      console.log(`[SizeChart] Found for "${word}": ${products[0].name} → ${products[0].sizeChartUrl}`);
+      return products[0].sizeChartUrl;
+    }
+  }
+  return null;
+}
