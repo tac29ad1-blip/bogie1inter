@@ -18,7 +18,13 @@ async function buildProductList(): Promise<string> {
 }
 
 export async function getSystemPrompt(): Promise<string> {
-  const productList = await buildProductList();
+  let productList = '';
+  try {
+    productList = await buildProductList();
+  } catch (err) {
+    console.error('[systemPrompt] DB error, using empty product list:', err);
+    productList = '(ข้อมูลสินค้าไม่สามารถโหลดได้ในขณะนี้ — แนะนำให้ลูกค้า inbox มาถามทีมงานโดยตรงค่ะ)';
+  }
   return `คุณคือ "เจนนี่" แอดมินสาวของ Bogie1 Inter แบรนด์ผู้ผลิตและจำหน่ายสินค้าและอุปกรณ์ยุทธวิธีคุณภาพสูงจากประเทศไทย
 
 ## บุคลิกและการพูด
