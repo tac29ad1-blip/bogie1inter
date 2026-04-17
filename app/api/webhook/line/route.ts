@@ -8,7 +8,7 @@ import { hasSizeColorQuery, findProductSizeChart } from '@/lib/products';
 const LINE_REPLY_URL = 'https://api.line.me/v2/bot/message/reply';
 
 // คำที่เกี่ยวกับการเปลี่ยนสินค้า
-const EXCHANGE_KEYWORDS = ['เปลี่ยนสินค้า', 'เปลี่ยนของ', 'เปลี่ยนไซส์', 'เปลี่ยนสี', 'return', 'exchange', 'คืนสินค้า'];
+const EXCHANGE_KEYWORDS = ['เปลี่ยนสินค้า', 'เปลี่ยนของ', 'เปลี่ยนไซส์', 'เปลี่ยนสี', 'เปลี่ยน', 'return', 'exchange', 'คืนสินค้า', 'คืนของ'];
 
 function isExchangeRequest(text: string): boolean {
   const lower = text.toLowerCase();
@@ -127,9 +127,13 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     // ตรวจว่าลูกค้าถามเรื่องไซส์/สี/ขนาด และหารูปตารางไซส์ถ้ามี
     let sizeChartImageUrl: string | null = null;
     if (hasSizeColorQuery(userText)) {
-      const chartPath = await findProductSizeChart(userText);
-      if (chartPath) {
-        sizeChartImageUrl = `${baseUrl}${chartPath}`;
+      try {
+        const chartPath = await findProductSizeChart(userText);
+        if (chartPath) {
+          sizeChartImageUrl = `${baseUrl}${chartPath}`;
+        }
+      } catch (err) {
+        console.error('[Line] findProductSizeChart error:', err);
       }
     }
 
