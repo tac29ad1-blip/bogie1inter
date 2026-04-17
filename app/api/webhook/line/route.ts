@@ -15,6 +15,35 @@ function isExchangeRequest(text: string): boolean {
   return EXCHANGE_KEYWORDS.some(kw => lower.includes(kw));
 }
 
+// ลิงก์หมวดหมู่สินค้า — เก็บไว้ใน code เพื่อป้องกัน AI เปลี่ยน URL
+const CATEGORY_LINKS: { keywords: string[]; url: string }[] = [
+  { keywords: ['กางเกง'], url: 'https://www.bogie1inter.com/category/Pants' },
+  { keywords: ['รองเท้า', 'บู้ท', 'คอมแบท บู้ท'], url: 'https://www.bogie1inter.com/category/Shoes' },
+  { keywords: ['เสื้อเกราะ', 'เกราะ'], url: 'https://www.bogie1inter.com/category/ARMOR' },
+  { keywords: ['เข็มขัด', 'battle belt'], url: 'https://www.bogie1inter.com/category/B\u0E3Aogie1-Belt' },
+  { keywords: ['ซองปืน', 'ซองแม็ก', 'เพลทเหน็บ', 'holster'], url: 'https://www.bogie1inter.com/category/%E0%B9%87Holster' },
+  { keywords: ['กระเป๋าซ่อนปืน', 'กระเป๋าเก็บปืน', 'pistol bag'], url: 'https://www.bogie1inter.com/category/Pistol-Bag' },
+  { keywords: ['กระเป๋าเป้', 'เป้สะพาย', 'backpack', 'กระเป๋าสะพาย'], url: 'https://www.bogie1inter.com/category/Backpack-CrossBag' },
+  { keywords: ['กระเป๋าเอนกประสงค์', 'กระเป๋าโน้ตบุค', 'กระเป๋าใส่เข็มขัด'], url: 'https://www.bogie1inter.com/category/Bag' },
+  { keywords: ['เสื้อยืด', 'เสื้อเชิ้ต', 'โปโล', 'คอมแบทเชิ้ต', 't-shirt'], url: 'https://www.bogie1inter.com/category/T-Shirt' },
+  { keywords: ['เสื้อกั๊ก'], url: 'https://www.bogie1inter.com/category/Bogie1-%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%81%E0%B8%B1%E0%B9%8A%E0%B8%81' },
+  { keywords: ['ชุดเวส', 'ชุดฝึก', 'ชุด คฝ', 'ชุด ปจ', 'คฝ', 'ปจ'], url: 'https://www.bogie1inter.com/category/Bogie1-%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%81%E0%B8%B1%E0%B9%8A%E0%B8%81' },
+  { keywords: ['อุปกรณ์ติดเกราะ', 'อุปกรณ์เกราะ', 'armor acc'], url: 'https://www.bogie1inter.com/category/Armor-Acc' },
+  { keywords: ['แจ็กเก็ต', 'flight jacket', 'jacket'], url: 'https://www.bogie1inter.com/category/Jacket' },
+  { keywords: ['ดิ้ว', 'ไฟฉาย', 'ซองไฟฉาย', 'ซองวิทยุ', 'กุญแจมือ', 'ซองกุญแจมือ'], url: 'https://www.bogie1inter.com/category/Others' },
+];
+
+// ตรวจว่าลูกค้าถามหมวดหมู่ไหน แล้วคืน URL ที่ถูกต้อง
+function getCategoryLink(text: string): string | null {
+  const lower = text.toLowerCase();
+  for (const cat of CATEGORY_LINKS) {
+    if (cat.keywords.some(kw => lower.includes(kw))) {
+      return cat.url;
+    }
+  }
+  return null;
+}
+
 // POST: Line OA webhook handler
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
@@ -56,12 +85,18 @@ async function replyMessage(
   text: string,
   includeExchangeImages = false,
   baseUrl = '',
-  sizeChartImageUrl: string | null = null
+  sizeChartImageUrl: string | null = null,
+  categoryLink: string | null = null
 ): Promise<void> {
   const channelAccessToken = getEnvVar('LINE_CHANNEL_ACCESS_TOKEN');
 
   // สร้างรายการ messages (LINE รับได้สูงสุด 5 messages ต่อ reply)
   const messages: object[] = [{ type: 'text', text }];
+
+  // ส่งลิงก์หมวดหมู่สินค้า (URL มาจาก code ไม่ใช่จาก AI เพื่อให้ถูกต้อง 100%)
+  if (categoryLink) {
+    messages.push({ type: 'text', text: categoryLink });
+  }
 
   // ส่งรูปตารางไซส์สินค้า (ถ้ามี)
   if (sizeChartImageUrl) {
@@ -144,9 +179,12 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
       }
     }
 
+    // ตรวจว่าลูกค้าถามหมวดสินค้ากว้างๆ → แนบลิงก์จาก code (ไม่ให้ AI generate URL เอง)
+    const categoryLink = getCategoryLink(userText);
+
     try {
       const reply = await getAIResponse(`line_${userId}`, userText);
-      await replyMessage(replyToken, reply, sendExchangeImages, baseUrl, sizeChartImageUrl);
+      await replyMessage(replyToken, reply, sendExchangeImages, baseUrl, sizeChartImageUrl, categoryLink);
     } catch (err: unknown) {
       const error = err as Error;
       console.error('[Line] AI error:', error.message);
