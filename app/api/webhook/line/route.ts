@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import axios from 'axios';
-import { getAIResponse } from '@/lib/ai';
+import { getAIResponse, clearHistory } from '@/lib/ai';
 import { getEnvVar } from '@/lib/ai';
 import { hasSizeColorQuery, findProductSizeChart } from '@/lib/products';
 
@@ -115,6 +115,13 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     if (!userId || !userText || !replyToken) continue;
 
     console.log(`[Line] Message from ${userId}: ${userText}`);
+
+    // คำสั่งล้าง history
+    if (userText.trim() === 'รีเซ็ต' || userText.trim().toLowerCase() === 'reset') {
+      clearHistory(`line_${userId}`);
+      await replyMessage(replyToken, 'ล้างประวัติการสนทนาแล้วค่ะ เริ่มใหม่ได้เลยนะคะ 😊');
+      continue;
+    }
 
     // ดึง base URL จาก request headers เพื่อใช้ใน image URL
     const host = req.headers.get('host') || '';
