@@ -382,8 +382,9 @@ export async function getProductById(id: number): Promise<(Product & { categoryS
 }
 
 export async function getCategoryBySlugFromDB(slug: string): Promise<Category | null> {
-  const c = await prisma.category.findUnique({
-    where: { slug },
+  // case-insensitive: /category/Pants และ /category/pants ทำงานได้เหมือนกัน
+  const c = await prisma.category.findFirst({
+    where: { slug: { equals: slug, mode: 'insensitive' } },
     include: { products: true },
   });
   if (!c) return null;

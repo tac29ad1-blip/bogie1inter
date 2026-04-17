@@ -72,18 +72,18 @@ export async function getSystemPrompt(): Promise<string> {
 
 | หมวดหมู่ | คำที่ลูกค้าอาจถาม | ลิงก์ |
 |---|---|---|
-| รองเท้าคอมแบท | รองเท้า, บู้ท, คอมแบท | https://www.bogie1inter.com/products/shoes |
-| เสื้อเกราะ | เสื้อเกราะ, เกราะ, เวส | https://www.bogie1inter.com/products/armor |
-| กางเกงยุทธวิธี | กางเกง, กางเกงยุทธวิธี | https://www.bogie1inter.com/products/pants |
-| เข็มขัดยุทธวิธี | เข็มขัด, สายรัด | https://www.bogie1inter.com/products/belts |
-| ซองปืน-ซองแม็ก | ซองปืน, ซองแม็ก, holster | https://www.bogie1inter.com/products/holsters |
-| กระเป๋าซ่อนปืน | กระเป๋าซ่อนปืน, กระเป๋าคาดเอว | https://www.bogie1inter.com/products/conceal-bags |
-| เป้-กระเป๋าสะพาย | กระเป๋า, เป้, สะพาย | https://www.bogie1inter.com/products/backpacks |
-| เสื้อยืด-โปโล | เสื้อยืด, โปโล, เสื้อเชิ้ต, คอมแบทเชิ้ต | https://www.bogie1inter.com/products/shirts |
-| เสื้อกั๊ก-ชุดเวส | เสื้อกั๊ก, ชุดเวส, ชุดฝึก | https://www.bogie1inter.com/products/vests |
-| อุปกรณ์ติดเสื้อเกราะ | อุปกรณ์เกราะ, ซองแมกติดเกราะ | https://www.bogie1inter.com/products/armor-accessories |
-| แจ็กเก็ต | แจ็กเก็ต, เสื้อกันหนาว, flight jacket | https://www.bogie1inter.com/products/jackets |
-| สินค้าอื่นๆ | ไฟฉาย, ดิ้ว, หมวก, ซองวิทยุ, กุญแจมือ | https://www.bogie1inter.com/products/accessories |
+| รองเท้าคอมแบท | รองเท้า, บู้ท, คอมแบท | https://www.bogie1inter.com/category/Shoes |
+| เสื้อเกราะ | เสื้อเกราะ, เกราะ, เวส | https://www.bogie1inter.com/category/ARMOR |
+| กางเกงยุทธวิธี | กางเกง, กางเกงยุทธวิธี | https://www.bogie1inter.com/category/Pants |
+| เข็มขัดยุทธวิธี | เข็มขัด, สายรัด | https://www.bogie1inter.com/category/Belts |
+| ซองปืน-ซองแม็ก | ซองปืน, ซองแม็ก, holster | https://www.bogie1inter.com/category/Holsters |
+| กระเป๋าซ่อนปืน | กระเป๋าซ่อนปืน, กระเป๋าคาดเอว | https://www.bogie1inter.com/category/Conceal-bags |
+| เป้-กระเป๋าสะพาย | กระเป๋า, เป้, สะพาย | https://www.bogie1inter.com/category/Backpacks |
+| เสื้อยืด-โปโล | เสื้อยืด, โปโล, เสื้อเชิ้ต, คอมแบทเชิ้ต | https://www.bogie1inter.com/category/Shirts |
+| เสื้อกั๊ก-ชุดเวส | เสื้อกั๊ก, ชุดเวส, ชุดฝึก | https://www.bogie1inter.com/category/Vests |
+| อุปกรณ์ติดเสื้อเกราะ | อุปกรณ์เกราะ, ซองแมกติดเกราะ | https://www.bogie1inter.com/category/Armor-accessories |
+| แจ็กเก็ต | แจ็กเก็ต, เสื้อกันหนาว, flight jacket | https://www.bogie1inter.com/category/Jackets |
+| สินค้าอื่นๆ | ไฟฉาย, ดิ้ว, หมวก, ซองวิทยุ, กุญแจมือ | https://www.bogie1inter.com/category/Accessories |
 
 **ดูสินค้าทั้งหมด:** https://www.bogie1inter.com/products
 
