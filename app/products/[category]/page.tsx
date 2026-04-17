@@ -2,10 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategories, getCategoryBySlugFromDB } from "@/lib/products";
 
-export async function generateStaticParams() {
-  const categories = await getCategories();
-  return categories.map((cat) => ({ category: cat.slug }));
-}
+// Render dynamically at request time — avoids needing DATABASE_URL at build time
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getCategories } from "@/lib/products";
 
+// Render dynamically at request time — avoids needing DATABASE_URL at build time
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "สินค้าทั้งหมด | Bogie1 Inter",
   description: "อุปกรณ์ยุทธวิธีคุณภาพสูง รองเท้าคอมแบท เสื้อเกราะ กางเกง เข็มขัด ซองปืน กระเป๋า และอื่นๆ",

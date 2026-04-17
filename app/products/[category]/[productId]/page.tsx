@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductById, getCategoryBySlugFromDB } from "@/lib/products";
 
+// Render dynamically at request time — avoids needing DATABASE_URL at build time
+export const dynamic = 'force-dynamic';
+
 export default async function ProductDetailPage({
   params,
 }: {
