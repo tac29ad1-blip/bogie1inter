@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { categories, getCategoryBySlug } from "@/lib/products";
+import { getCategories, getCategoryBySlugFromDB } from "@/lib/products";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const categories = await getCategories();
   return categories.map((cat) => ({ category: cat.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
-  const cat = getCategoryBySlug(category);
+  const cat = await getCategoryBySlugFromDB(category);
   if (!cat) return {};
   return {
     title: `${cat.name} | Bogie1 Inter`,
@@ -18,7 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
-  const cat = getCategoryBySlug(category);
+  const [cat, allCategories] = await Promise.all([
+    getCategoryBySlugFromDB(category),
+    getCategories(),
+  ]);
   if (!cat) notFound();
 
   return (
@@ -100,7 +104,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-white/50 text-sm uppercase tracking-wider mb-6">หมวดหมู่อื่น</h2>
           <div className="flex flex-wrap gap-3">
-            {categories
+            {allCategories
               .filter((c) => c.slug !== cat.slug)
               .map((c) => (
                 <Link

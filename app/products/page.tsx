@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { categories } from "@/lib/products";
+import { getCategories } from "@/lib/products";
 
 export const metadata = {
   title: "สินค้าทั้งหมด | Bogie1 Inter",
   description: "อุปกรณ์ยุทธวิธีคุณภาพสูง รองเท้าคอมแบท เสื้อเกราะ กางเกง เข็มขัด ซองปืน กระเป๋า และอื่นๆ",
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const categories = await getCategories();
+
   return (
     <main className="min-h-screen bg-[#0a0a0a] pt-20">
       {/* Header */}

@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
-import { BOGIE1_SYSTEM_PROMPT } from './systemPrompt';
+import { getSystemPrompt } from './systemPrompt';
 
 // Read .env/.env.local directly to avoid Claude Code env injection override
 function readEnvFile(): Record<string, string> {
@@ -54,10 +54,11 @@ export async function getAIResponse(userId: string, userMessage: string): Promis
   history.push({ role: 'user', content: userMessage });
   trimHistory(history);
 
+  const systemPrompt = await getSystemPrompt();
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: BOGIE1_SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: history,
   });
 

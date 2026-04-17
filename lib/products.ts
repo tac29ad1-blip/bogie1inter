@@ -3,6 +3,12 @@ export interface Product {
   price: number;
   originalPrice?: number;
   discount?: number;
+  description?: string;
+  material?: string;
+  sizes?: string;
+  colors?: string;
+  features?: string;
+  imageUrl?: string;
 }
 
 export interface Category {
@@ -310,4 +316,49 @@ export const categories: Category[] = [
 
 export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug);
+}
+
+// --- DB functions ---
+import { prisma } from './db';
+import { Prisma } from '@prisma/client';
+
+type PrismaCategoryWithProducts = Prisma.CategoryGetPayload<{ include: { products: true } }>;
+
+function mapCategory(c: PrismaCategoryWithProducts): Category {
+  return {
+    slug: c.slug,
+    name: c.name,
+    nameEn: c.nameEn,
+    icon: c.icon,
+    description: c.description,
+    products: c.products.map((p) => ({
+      name: p.name,
+      price: p.price,
+      originalPrice: p.originalPrice ?? undefined,
+      discount: p.discount ?? undefined,
+      description: p.description ?? undefined,
+      material: p.material ?? undefined,
+      sizes: p.sizes ?? undefined,
+      colors: p.colors ?? undefined,
+      features: p.features ?? undefined,
+      imageUrl: p.imageUrl ?? undefined,
+    })),
+  };
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const rows = await prisma.category.findMany({
+    include: { products: true },
+    orderBy: { id: 'asc' },
+  });
+  return rows.map(mapCategory);
+}
+
+export async function getCategoryBySlugFromDB(slug: string): Promise<Category | null> {
+  const c = await prisma.category.findUnique({
+    where: { slug },
+    include: { products: true },
+  });
+  if (!c) return null;
+  return mapCategory(c);
 }
