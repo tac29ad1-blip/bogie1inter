@@ -72,18 +72,20 @@ export async function getSystemPrompt(): Promise<string> {
 
 | หมวดหมู่ | คำที่ลูกค้าอาจถาม | ลิงก์ |
 |---|---|---|
-| รองเท้าคอมแบท | รองเท้า, บู้ท, คอมแบท | https://www.bogie1inter.com/category/Shoes |
-| เสื้อเกราะ | เสื้อเกราะ, เกราะ, เวส | https://www.bogie1inter.com/category/ARMOR |
-| กางเกงยุทธวิธี | กางเกง, กางเกงยุทธวิธี | https://www.bogie1inter.com/category/Pants |
-| เข็มขัดยุทธวิธี | เข็มขัด, สายรัด | https://www.bogie1inter.com/category/Belts |
-| ซองปืน-ซองแม็ก | ซองปืน, ซองแม็ก, holster | https://www.bogie1inter.com/category/Holsters |
-| กระเป๋าซ่อนปืน | กระเป๋าซ่อนปืน, กระเป๋าคาดเอว | https://www.bogie1inter.com/category/Conceal-bags |
-| เป้-กระเป๋าสะพาย | กระเป๋า, เป้, สะพาย | https://www.bogie1inter.com/category/Backpacks |
-| เสื้อยืด-โปโล | เสื้อยืด, โปโล, เสื้อเชิ้ต, คอมแบทเชิ้ต | https://www.bogie1inter.com/category/Shirts |
-| เสื้อกั๊ก-ชุดเวส | เสื้อกั๊ก, ชุดเวส, ชุดฝึก | https://www.bogie1inter.com/category/Vests |
-| อุปกรณ์ติดเสื้อเกราะ | อุปกรณ์เกราะ, ซองแมกติดเกราะ | https://www.bogie1inter.com/category/Armor-accessories |
-| แจ็กเก็ต | แจ็กเก็ต, เสื้อกันหนาว, flight jacket | https://www.bogie1inter.com/category/Jackets |
-| สินค้าอื่นๆ | ไฟฉาย, ดิ้ว, หมวก, ซองวิทยุ, กุญแจมือ | https://www.bogie1inter.com/category/Accessories |
+| กางเกง | กางเกง, กางเกงยุทธวิธี | https://www.bogie1inter.com/category/Pants |
+| รองเท้า | รองเท้า, บู้ท, คอมแบท | https://www.bogie1inter.com/category/Shoes |
+| เสื้อเกราะ | เสื้อเกราะ, เกราะ | https://www.bogie1inter.com/category/ARMOR |
+| เข็มขัด | เข็มขัด, สายรัด, battle belt | https://www.bogie1inter.com/category/B%E0%B8%BAogie1-Belt |
+| ซองปืน ซองแม็ก เพลทเหน็บ | ซองปืน, ซองแม็ก, เพลทเหน็บ, holster | https://www.bogie1inter.com/category/%E0%B9%87Holster |
+| กระเป๋าซ่อนปืน กระเป๋าเก็บปืน | กระเป๋าซ่อนปืน, กระเป๋าเก็บปืน, กระเป๋าคาดเอว | https://www.bogie1inter.com/category/Pistol-Bag |
+| เป้ กระเป๋าสะพาย | เป้, กระเป๋าสะพาย, backpack | https://www.bogie1inter.com/category/Backpack-CrossBag |
+| กระเป๋าเอนกประสงค์ กระเป๋าอื่นๆ | กระเป๋าเอนกประสงค์, กระเป๋าโน้ตบุค, กระเป๋าใส่เข็มขัด | https://www.bogie1inter.com/category/Bag |
+| เสื้อยืด เสื้อเชิ้ต โปโล | เสื้อยืด, เสื้อเชิ้ต, โปโล, คอมแบทเชิ้ต | https://www.bogie1inter.com/category/T-Shirt |
+| เสื้อกั๊ก | เสื้อกั๊ก | https://www.bogie1inter.com/category/Bogie1-%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%81%E0%B8%B1%E0%B9%8A%E0%B8%81 |
+| ชุดเวส ชุดฝึก ปจ คฝ | ชุดเวส, ชุดฝึก, ปจ, คฝ | https://www.bogie1inter.com/category/Bogie1-%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%81%E0%B8%B1%E0%B9%8A%E0%B8%81 |
+| อุปกรณ์ติดเสื้อเกราะ | อุปกรณ์เกราะ, ซองแมกติดเกราะ, armor acc | https://www.bogie1inter.com/category/Armor-Acc |
+| แจ็กเก็ต | แจ็กเก็ต, เสื้อกันหนาว, flight jacket | https://www.bogie1inter.com/category/Jacket |
+| ดิ้ว ไฟฉาย ซองวิทยุ กุญแจมือ และอื่นๆ | ดิ้ว, ไฟฉาย, ซองไฟฉาย, ซองวิทยุ, กุญแจมือ, ซองกุญแจมือ | https://www.bogie1inter.com/category/Others |
 
 **ดูสินค้าทั้งหมด:** https://www.bogie1inter.com/products
 
