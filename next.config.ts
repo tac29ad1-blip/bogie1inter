@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.line-scdn.net' },
     ],
   },
+  async redirects() {
+    return [
+      // /category/:slug → /products/:slug (รองรับลิงก์เก่า)
+      {
+        source: '/category/:slug',
+        destination: '/products/:slug',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
