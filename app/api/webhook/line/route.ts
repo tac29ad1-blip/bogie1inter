@@ -6,6 +6,14 @@ import { getEnvVar } from '@/lib/ai';
 
 const LINE_REPLY_URL = 'https://api.line.me/v2/bot/message/reply';
 
+// คำที่เกี่ยวกับการเปลี่ยนสินค้า
+const EXCHANGE_KEYWORDS = ['เปลี่ยนสินค้า', 'เปลี่ยนของ', 'เปลี่ยนไซส์', 'เปลี่ยนสี', 'return', 'exchange', 'คืนสินค้า'];
+
+function isExchangeRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  return EXCHANGE_KEYWORDS.some(kw => lower.includes(kw));
+}
+
 // POST: Line OA webhook handler
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
@@ -35,22 +43,37 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const response = new NextResponse('OK', { status: 200 });
 
   // Process events asynchronously
-  processEvents(body).catch((err) =>
+  processEvents(body, req).catch((err) =>
     console.error('[Line] processEvents error:', err)
   );
 
   return response;
 }
 
-async function replyMessage(replyToken: string, text: string): Promise<void> {
+async function replyMessage(
+  replyToken: string,
+  text: string,
+  includeExchangeImages = false,
+  baseUrl = ''
+): Promise<void> {
   const channelAccessToken = getEnvVar('LINE_CHANNEL_ACCESS_TOKEN');
+
+  // สร้างรายการ messages (LINE รับได้สูงสุด 5 messages ต่อ reply)
+  const messages: object[] = [{ type: 'text', text }];
+
+  if (includeExchangeImages && baseUrl) {
+    const img1 = `${baseUrl}/exchange-step1.jpg`;
+    const img2 = `${baseUrl}/exchange-step2.jpg`;
+    messages.push(
+      { type: 'image', originalContentUrl: img1, previewImageUrl: img1 },
+      { type: 'image', originalContentUrl: img2, previewImageUrl: img2 }
+    );
+  }
+
   try {
     await axios.post(
       LINE_REPLY_URL,
-      {
-        replyToken,
-        messages: [{ type: 'text', text }],
-      },
+      { replyToken, messages },
       {
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +87,7 @@ async function replyMessage(replyToken: string, text: string): Promise<void> {
   }
 }
 
-async function processEvents(body: Record<string, unknown>): Promise<void> {
+async function processEvents(body: Record<string, unknown>, req: NextRequest): Promise<void> {
   const events = (body.events as Array<Record<string, unknown>>) || [];
 
   for (const event of events) {
@@ -83,15 +106,23 @@ async function processEvents(body: Record<string, unknown>): Promise<void> {
 
     console.log(`[Line] Message from ${userId}: ${userText}`);
 
+    // ดึง base URL จาก request headers เพื่อใช้ใน image URL
+    const host = req.headers.get('host') || '';
+    const proto = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${proto}://${host}`;
+
+    // ตรวจว่าลูกค้าถามเรื่องเปลี่ยนสินค้าหรือเปล่า
+    const sendExchangeImages = isExchangeRequest(userText);
+
     try {
       const reply = await getAIResponse(`line_${userId}`, userText);
-      await replyMessage(replyToken, reply);
+      await replyMessage(replyToken, reply, sendExchangeImages, baseUrl);
     } catch (err: unknown) {
       const error = err as Error;
       console.error('[Line] AI error:', error.message);
       await replyMessage(
         replyToken,
-        'ขออภัยครับ เกิดข้อผิดพลาดชั่วคราว รบกวนลองใหม่อีกครั้งนะครับ 🙏'
+        'ขออภัยค่ะ เกิดข้อผิดพลาดชั่วคราว รบกวนลองใหม่อีกครั้งนะคะ 🙏'
       );
     }
   }
