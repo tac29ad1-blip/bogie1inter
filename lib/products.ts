@@ -407,21 +407,24 @@ export function hasSizeColorQuery(text: string): boolean {
  * ใช้สำหรับส่งรูปตารางไซส์ให้ลูกค้าอัตโนมัติ
  */
 export async function findProductSizeChart(userText: string, contextTexts: string[] = []): Promise<string | null> {
-  // รวมข้อความปัจจุบันกับ context ย้อนหลัง (เช่น ข้อความ user ก่อนหน้า + คำตอบบอท)
-  // เพื่อให้ค้นหารุ่นสินค้าที่พูดถึงก่อนหน้าได้ด้วย
+  // รวมข้อความปัจจุบันกับ context ย้อนหลัง
   const allTexts = [userText, ...contextTexts];
   const words = new Set<string>();
   for (const t of allTexts) {
     t.split(/[\s,/()]+/).filter(w => w.length >= 3).forEach(w => words.add(w));
   }
-  if (words.size === 0) return null;
+  if (words.size === 0) {
+    console.log('[SizeChart] No words to search');
+    return null;
+  }
 
-  // ค้นหา product ที่ชื่อตรงกับคำในข้อความ
-  // ให้ข้อความปัจจุบันมีน้ำหนักมากกว่า (วน loop userText ก่อน)
   const orderedWords = [
     ...userText.split(/[\s,/()]+/).filter(w => w.length >= 3),
     ...Array.from(words).filter(w => !userText.includes(w)),
   ];
+  console.log(`[SizeChart] Searching with words: ${orderedWords.join(', ')}`);
+
+  // ขั้นที่ 1: หา product ที่ชื่อตรงกับคำ AND มี sizeChartUrl
   for (const word of orderedWords) {
     const products = await prisma.product.findMany({
       where: {
@@ -431,10 +434,23 @@ export async function findProductSizeChart(userText: string, contextTexts: strin
       select: { id: true, name: true, sizeChartUrl: true },
       take: 1,
     });
-    if (products.length > 0 && products[0].sizeChartUrl) {
-      console.log(`[SizeChart] Found for "${word}": ${products[0].name} → ${products[0].sizeChartUrl}`);
+    if (products.length > 0 && products[0].sizeChartUrl && products[0].sizeChartUrl.trim() !== '') {
+      console.log(`[SizeChart] ✅ Found for "${word}": ${products[0].name} → ${products[0].sizeChartUrl}`);
       return products[0].sizeChartUrl;
     }
   }
+
+  // ขั้นที่ 2: debug — หาสินค้าที่ชื่อตรง แต่ไม่สน sizeChartUrl → log ให้รู้ว่าสินค้ามีแต่ไม่มี sizeChart
+  for (const word of orderedWords) {
+    const products = await prisma.product.findMany({
+      where: { name: { contains: word, mode: 'insensitive' } },
+      select: { id: true, name: true, sizeChartUrl: true },
+      take: 2,
+    });
+    if (products.length > 0) {
+      console.log(`[SizeChart] ⚠️ Found product matching "${word}" but no sizeChartUrl: ${products.map(p => `${p.name} (url=${p.sizeChartUrl ?? 'null'})`).join(', ')}`);
+    }
+  }
+  console.log('[SizeChart] ❌ No match found');
   return null;
 }
