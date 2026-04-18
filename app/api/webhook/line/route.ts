@@ -215,11 +215,21 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     const sendPaymentImage = isTransferPayment(userText);
 
     // ตรวจว่าลูกค้าถามเรื่องไซส์/สี/ขนาด และหารูปตารางไซส์ถ้ามี
-    // ส่งรูปตารางไซส์ "เฉพาะข้อความปัจจุบัน" ที่มี keyword ตารางไซส์
-    // (ไม่เช็ค history เพื่อป้องกันส่งซ้ำตอนลูกค้ากำลังสั่งซื้อหรือเลือกโอน)
+    // ตัดสินใจส่งรูปตารางไซส์:
+    // ✅ ส่ง: ลูกค้าพิมพ์ "ตารางไซส์" / รหัสรุ่น (IX9/IX10) / ตัวเลขรอบเอว (เช่น "32", "33")
+    // ❌ ไม่ส่ง: ลูกค้าเลือกสี (ดำ/ขาว/...) / เลือกชำระ (โอน/ปลายทาง) / คำสั่งซื้อ
     const recentContext = getRecentMessages(`line_${userId}`, 6);
-    const wantsSizeChart =
-      /ตารางไซส์|ตารางขนาด|size\s*chart/i.test(userText);
+    const trimmedText = userText.trim();
+
+    const isOrderAction =
+      /^(ดำ|ขาว|เขียว|กรม|เทา|ทราย|แดง|น้ำเงิน|เหลือง|ชมพู|ฟ้า|ส้ม|มัลติแคม)\s*$/i.test(trimmedText) ||
+      /(โอน|ปลายทาง|cod|transfer|ชำระ|จ่าย)/i.test(userText);
+
+    const hasExplicitSizeKeyword = /(ตารางไซส์|ตารางขนาด|size\s*chart)/i.test(userText);
+    const hasProductCode = /\b[A-Za-z]{2,4}\d{1,3}[A-Za-z]?\b/.test(userText);
+    const isPureNumber = /^\s*\d{2}\s*(นิ้ว)?\s*$/.test(trimmedText);
+
+    const wantsSizeChart = !isOrderAction && (hasExplicitSizeKeyword || hasProductCode || isPureNumber);
 
     let sizeChartImageUrl: string | null = null;
     if (wantsSizeChart) {
