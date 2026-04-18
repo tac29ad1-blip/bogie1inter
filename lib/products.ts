@@ -407,8 +407,36 @@ export function hasSizeColorQuery(text: string): boolean {
  * ใช้สำหรับส่งรูปตารางไซส์ให้ลูกค้าอัตโนมัติ
  */
 export async function findProductSizeChart(userText: string, contextTexts: string[] = []): Promise<string | null> {
-  // รวมข้อความปัจจุบันกับ context ย้อนหลัง
   const allTexts = [userText, ...contextTexts];
+
+  // **ขั้นที่ 0 (priority สูงสุด)**: ดึง product model code (IX10, AHQ9, J01, PD25, V02 ฯลฯ)
+  // ออกจากข้อความทั้งหมด แล้วค้นด้วย code พวกนี้ก่อน เพราะเจาะจงรุ่นชัดเจน
+  const modelCodeRegex = /\b([A-Za-z]{1,4}\d{1,3}[A-Za-z]?)\b/g;
+  const modelCodes = new Set<string>();
+  for (const t of allTexts) {
+    const matches = t.matchAll(modelCodeRegex);
+    for (const m of matches) modelCodes.add(m[1]);
+  }
+
+  if (modelCodes.size > 0) {
+    console.log(`[SizeChart] Model codes found: ${Array.from(modelCodes).join(', ')}`);
+    for (const code of modelCodes) {
+      const products = await prisma.product.findMany({
+        where: {
+          name: { contains: code, mode: 'insensitive' },
+          sizeChartUrl: { not: null },
+        },
+        select: { id: true, name: true, sizeChartUrl: true },
+        take: 1,
+      });
+      if (products.length > 0 && products[0].sizeChartUrl && products[0].sizeChartUrl.trim() !== '') {
+        console.log(`[SizeChart] ✅ Found by model code "${code}": ${products[0].name} → ${products[0].sizeChartUrl}`);
+        return products[0].sizeChartUrl;
+      }
+    }
+  }
+
+  // ขั้นที่ 1: fallback — ค้นจากคำทั่วไป (context ก่อน userText เพราะลูกค้ามักพิมพ์คำเสริม)
   const words = new Set<string>();
   for (const t of allTexts) {
     t.split(/[\s,/()]+/).filter(w => w.length >= 3).forEach(w => words.add(w));
@@ -418,13 +446,17 @@ export async function findProductSizeChart(userText: string, contextTexts: strin
     return null;
   }
 
+  // context มาก่อน เพราะบริบทชัดเจนกว่า แล้วค่อย userText
+  const contextWords = new Set<string>();
+  for (const t of contextTexts) {
+    t.split(/[\s,/()]+/).filter(w => w.length >= 3).forEach(w => contextWords.add(w));
+  }
   const orderedWords = [
-    ...userText.split(/[\s,/()]+/).filter(w => w.length >= 3),
-    ...Array.from(words).filter(w => !userText.includes(w)),
+    ...Array.from(contextWords),
+    ...userText.split(/[\s,/()]+/).filter(w => w.length >= 3 && !contextWords.has(w)),
   ];
-  console.log(`[SizeChart] Searching with words: ${orderedWords.join(', ')}`);
+  console.log(`[SizeChart] Fallback search: ${orderedWords.join(', ')}`);
 
-  // ขั้นที่ 1: หา product ที่ชื่อตรงกับคำ AND มี sizeChartUrl
   for (const word of orderedWords) {
     const products = await prisma.product.findMany({
       where: {
