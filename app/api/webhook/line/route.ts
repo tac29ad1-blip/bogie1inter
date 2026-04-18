@@ -15,6 +15,14 @@ function isExchangeRequest(text: string): boolean {
   return EXCHANGE_KEYWORDS.some(kw => lower.includes(kw));
 }
 
+// คำที่บ่งชี้ว่าลูกค้าเลือกจ่ายแบบโอน → ต้องส่งรูปเลขบัญชี
+const TRANSFER_KEYWORDS = ['โอน', 'โอนเงิน', 'transfer', 'เลขบัญชี', 'บัญชีธนาคาร'];
+
+function isTransferPayment(text: string): boolean {
+  const lower = text.toLowerCase();
+  return TRANSFER_KEYWORDS.some(kw => lower.includes(kw));
+}
+
 // ลิงก์หมวดหมู่สินค้า — เก็บไว้ใน code เพื่อป้องกัน AI เปลี่ยน URL
 const CATEGORY_LINKS: { keywords: string[]; url: string }[] = [
   { keywords: ['กางเกง'], url: 'https://www.bogie1inter.com/category/Pants' },
@@ -86,7 +94,8 @@ async function replyMessage(
   includeExchangeImages = false,
   baseUrl = '',
   sizeChartImageUrl: string | null = null,
-  categoryLink: string | null = null
+  categoryLink: string | null = null,
+  includePaymentImage = false
 ): Promise<void> {
   const channelAccessToken = getEnvVar('LINE_CHANNEL_ACCESS_TOKEN');
 
@@ -102,6 +111,14 @@ async function replyMessage(
   if (sizeChartImageUrl) {
     messages.push(
       { type: 'image', originalContentUrl: sizeChartImageUrl, previewImageUrl: sizeChartImageUrl }
+    );
+  }
+
+  // ส่งรูปบัญชีธนาคาร (ลูกค้าเลือกโอนเงิน)
+  if (includePaymentImage && baseUrl) {
+    const paymentImg = `${baseUrl}/payment-info.jpg`;
+    messages.push(
+      { type: 'image', originalContentUrl: paymentImg, previewImageUrl: paymentImg }
     );
   }
 
@@ -194,6 +211,9 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     // ตรวจว่าลูกค้าถามเรื่องเปลี่ยนสินค้าหรือเปล่า
     const sendExchangeImages = isExchangeRequest(userText);
 
+    // ตรวจว่าลูกค้าเลือกจ่ายแบบโอน → ส่งรูปเลขบัญชี
+    const sendPaymentImage = isTransferPayment(userText);
+
     // ตรวจว่าลูกค้าถามเรื่องไซส์/สี/ขนาด และหารูปตารางไซส์ถ้ามี
     // เช็คว่าข้อความปัจจุบัน หรือ 4 ข้อความล่าสุดใน history มี keyword ไซส์/สี/วัสดุไหม
     // เพราะลูกค้าอาจถามแยกเป็นหลายข้อความ เช่น "ขอตารางไซส์" แล้วค่อยพิมพ์ "IX10"
@@ -218,7 +238,7 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
 
     try {
       const reply = await getAIResponse(`line_${userId}`, userText);
-      await replyMessage(replyToken, reply, sendExchangeImages, baseUrl, sizeChartImageUrl, categoryLink);
+      await replyMessage(replyToken, reply, sendExchangeImages, baseUrl, sizeChartImageUrl, categoryLink, sendPaymentImage);
     } catch (err: unknown) {
       const error = err as Error;
       console.error('[Line] AI error:', error.message);
