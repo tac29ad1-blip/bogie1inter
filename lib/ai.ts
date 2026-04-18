@@ -58,7 +58,13 @@ export async function getAIResponse(userId: string, userMessage: string): Promis
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: systemPrompt,
+    system: [
+      {
+        type: 'text',
+        text: systemPrompt,
+        cache_control: { type: 'ephemeral' }, // Cache system prompt → ลดค่าใช้จ่าย ~90%
+      },
+    ],
     messages: history,
   });
 
