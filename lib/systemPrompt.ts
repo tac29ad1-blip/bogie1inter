@@ -1,6 +1,6 @@
 import { getCategories } from "./products";
 
-// สร้างรายการสินค้าทั้งหมดแบบ text สำหรับ AI
+// สร้างรายการสินค้าทั้งหมดแบบ text สำหรับ AI (รวม ไซส์ สี วัสดุ)
 async function buildProductList(): Promise<string> {
   const cats = await getCategories();
   return cats
@@ -9,7 +9,12 @@ async function buildProductList(): Promise<string> {
         .map((p) => {
           const price = `${p.price.toLocaleString()} ฿`;
           const orig = p.originalPrice ? ` (ลดจาก ${p.originalPrice.toLocaleString()} ฿)` : "";
-          return `  - ${p.name}: ${price}${orig}`;
+          const details: string[] = [];
+          if (p.sizes) details.push(`ไซส์: ${p.sizes}`);
+          if (p.colors) details.push(`สี: ${p.colors}`);
+          if (p.material) details.push(`วัสดุ: ${p.material}`);
+          const detailsStr = details.length ? ` [${details.join(' | ')}]` : '';
+          return `  - ${p.name}: ${price}${orig}${detailsStr}`;
         })
         .join("\n");
       return `### ${cat.name} (${cat.nameEn})\n${items}`;
@@ -61,8 +66,10 @@ export async function getSystemPrompt(): Promise<string> {
 3. **เรียกผู้ที่ทักมาว่า "ลูกค้า" เสมอ ห้ามเรียกว่า "น้อง" "คุณ" "พี่" หรือสรรพนามอื่น**
 4. ตอบสั้นกระชับ ตรงประเด็น ไม่ยืดเยื้อ
 5. ถ้าถามราคาสินค้าที่มีในรายการ ตอบราคาได้เลย
-6. **ห้ามแนะนำให้ "inbox" หรือ "Line: @bg1inter" เด็ดขาด** เพราะลูกค้ากำลังคุยกับเราอยู่แล้วทางนี้ — ให้จัดการในแชทนี้ได้เลย
-7. ถ้าลูกค้าต้องการซื้อ ให้ถามรายละเอียด (รุ่น สี ไซส์ จำนวน) แล้วแจ้งบัญชีโอนเงินได้เลย — **ห้ามส่งลิงก์ Shopee หรือลิงก์ภายนอกใดๆ**
+6. **การค้นหารุ่นสินค้าให้ไม่สนใจตัวเล็ก-ใหญ่** เช่น "ix10", "IX10", "Ix10" ถือเป็นรุ่นเดียวกัน — เทียบแบบ case-insensitive เสมอ
+7. ถ้าลูกค้าถามเรื่อง**ไซส์/สี/วัสดุ** ของรุ่นใดรุ่นหนึ่ง ให้ดูข้อมูลจากในวงเล็บ `[ไซส์: ... | สี: ... | วัสดุ: ...]` ที่อยู่หลังชื่อสินค้า แล้วตอบตามนั้น — ถ้าข้อมูลไม่มีในรายการ ให้บอกว่า "ทีมงานจะเช็คให้นะคะ รอสักครู่ค่ะ"
+8. **ห้ามแนะนำให้ "inbox" หรือ "Line: @bg1inter" เด็ดขาด** เพราะลูกค้ากำลังคุยกับเราอยู่แล้วทางนี้ — ให้จัดการในแชทนี้ได้เลย
+9. ถ้าลูกค้าต้องการซื้อ ให้ถามรายละเอียด (รุ่น สี ไซส์ จำนวน) แล้วแจ้งบัญชีโอนเงินได้เลย — **ห้ามส่งลิงก์ Shopee หรือลิงก์ภายนอกใดๆ**
 
 ### การส่งลิงก์หมวดหมู่สินค้า
 
