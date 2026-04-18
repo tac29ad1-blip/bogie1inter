@@ -215,14 +215,14 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     const sendPaymentImage = isTransferPayment(userText);
 
     // ตรวจว่าลูกค้าถามเรื่องไซส์/สี/ขนาด และหารูปตารางไซส์ถ้ามี
-    // เช็คว่าข้อความปัจจุบัน หรือ 4 ข้อความล่าสุดใน history มี keyword ไซส์/สี/วัสดุไหม
-    // เพราะลูกค้าอาจถามแยกเป็นหลายข้อความ เช่น "ขอตารางไซส์" แล้วค่อยพิมพ์ "IX10"
+    // ส่งรูปตารางไซส์ "เฉพาะข้อความปัจจุบัน" ที่มี keyword ตารางไซส์
+    // (ไม่เช็ค history เพื่อป้องกันส่งซ้ำตอนลูกค้ากำลังสั่งซื้อหรือเลือกโอน)
     const recentContext = getRecentMessages(`line_${userId}`, 6);
-    const hasSizeKeywordAnywhere = hasSizeColorQuery(userText) ||
-      recentContext.slice(-4).some(m => hasSizeColorQuery(m));
+    const wantsSizeChart =
+      /ตารางไซส์|ตารางขนาด|size\s*chart/i.test(userText);
 
     let sizeChartImageUrl: string | null = null;
-    if (hasSizeKeywordAnywhere) {
+    if (wantsSizeChart) {
       try {
         const chartPath = await findProductSizeChart(userText, recentContext);
         if (chartPath) {
