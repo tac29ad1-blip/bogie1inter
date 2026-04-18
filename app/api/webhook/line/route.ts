@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import axios from 'axios';
-import { getAIResponse, getAIResponseWithImage, clearHistory } from '@/lib/ai';
+import { getAIResponse, getAIResponseWithImage, clearHistory, getRecentMessages } from '@/lib/ai';
 import { getEnvVar } from '@/lib/ai';
 import { hasSizeColorQuery, findProductSizeChart } from '@/lib/products';
 
@@ -198,7 +198,9 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     let sizeChartImageUrl: string | null = null;
     if (hasSizeColorQuery(userText)) {
       try {
-        const chartPath = await findProductSizeChart(userText);
+        // ใช้ context จาก history ล่าสุด 6 ข้อความ เพื่อหารุ่นสินค้าที่พูดถึงก่อนหน้า
+        const recentContext = getRecentMessages(`line_${userId}`, 6);
+        const chartPath = await findProductSizeChart(userText, recentContext);
         if (chartPath) {
           sizeChartImageUrl = `${baseUrl}${chartPath}`;
         }

@@ -119,3 +119,9 @@ export async function getAIResponseWithImage(
 export function clearHistory(userId: string): void {
   conversationHistory.delete(userId);
 }
+
+// ดึง text จาก history ล่าสุด N ข้อความ (ใช้เป็น context สำหรับค้นหารุ่นสินค้า)
+export function getRecentMessages(userId: string, n = 6): string[] {
+  const history = conversationHistory.get(userId) ?? [];
+  return history.slice(-n).map(m => m.content);
+}

@@ -406,13 +406,23 @@ export function hasSizeColorQuery(text: string): boolean {
  * ค้นหาสินค้าที่ตรงกับข้อความของลูกค้า แล้วคืน sizeChartUrl ถ้ามี
  * ใช้สำหรับส่งรูปตารางไซส์ให้ลูกค้าอัตโนมัติ
  */
-export async function findProductSizeChart(userText: string): Promise<string | null> {
-  // แยกคำสำคัญจากข้อความ (ตัดคำสั้น < 3 ตัวอักษรออก)
-  const words = userText.split(/[\s,/]+/).filter(w => w.length >= 3);
-  if (words.length === 0) return null;
+export async function findProductSizeChart(userText: string, contextTexts: string[] = []): Promise<string | null> {
+  // รวมข้อความปัจจุบันกับ context ย้อนหลัง (เช่น ข้อความ user ก่อนหน้า + คำตอบบอท)
+  // เพื่อให้ค้นหารุ่นสินค้าที่พูดถึงก่อนหน้าได้ด้วย
+  const allTexts = [userText, ...contextTexts];
+  const words = new Set<string>();
+  for (const t of allTexts) {
+    t.split(/[\s,/()]+/).filter(w => w.length >= 3).forEach(w => words.add(w));
+  }
+  if (words.size === 0) return null;
 
   // ค้นหา product ที่ชื่อตรงกับคำในข้อความ
-  for (const word of words) {
+  // ให้ข้อความปัจจุบันมีน้ำหนักมากกว่า (วน loop userText ก่อน)
+  const orderedWords = [
+    ...userText.split(/[\s,/()]+/).filter(w => w.length >= 3),
+    ...Array.from(words).filter(w => !userText.includes(w)),
+  ];
+  for (const word of orderedWords) {
     const products = await prisma.product.findMany({
       where: {
         name: { contains: word, mode: 'insensitive' },
