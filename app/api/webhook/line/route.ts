@@ -7,12 +7,32 @@ import { hasSizeColorQuery, findProductSizeChart } from '@/lib/products';
 
 const LINE_REPLY_URL = 'https://api.line.me/v2/bot/message/reply';
 
-// คำที่เกี่ยวกับการเปลี่ยนสินค้า
-const EXCHANGE_KEYWORDS = ['เปลี่ยนสินค้า', 'เปลี่ยนของ', 'เปลี่ยนไซส์', 'เปลี่ยนสี', 'เปลี่ยน', 'return', 'exchange', 'คืนสินค้า', 'คืนของ'];
+// คำที่เจาะจงว่าลูกค้าต้องการ "เปลี่ยนสินค้า" (หลังการซื้อ) — ต้องชัดเจน
+const EXPLICIT_EXCHANGE_KEYWORDS = [
+  'เปลี่ยนสินค้า', 'เปลี่ยนของ', 'เปลี่ยนไซส์', 'เปลี่ยนสี',
+  'return', 'exchange', 'คืนสินค้า', 'คืนของ', 'เคลมสินค้า',
+];
 
-function isExchangeRequest(text: string): boolean {
+// คำที่บ่งชี้ว่ากำลังอยู่ในบริบทของการสั่งซื้อ/ชำระเงิน (ไม่ใช่เปลี่ยนสินค้า)
+const ORDERING_CONTEXT_PATTERN = /(สรุปยอด|สรุปรายการ|ยอดโอน|โอนเงิน|ปลายทาง|cod|ชำระ|สั่งซื้อ|จ่ายเงิน|สั่ง|ยอดเรียกเก็บ)/i;
+
+function isExchangeRequest(text: string, recentContext: string[] = []): boolean {
   const lower = text.toLowerCase();
-  return EXCHANGE_KEYWORDS.some(kw => lower.includes(kw));
+
+  // ✅ คำเจาะจง → trigger เสมอ
+  if (EXPLICIT_EXCHANGE_KEYWORDS.some(kw => lower.includes(kw))) return true;
+
+  // "เปลี่ยน" เฉยๆ → ต้องดู context
+  // ถ้าคุยเรื่องชำระเงิน/สั่งซื้ออยู่ → "เปลี่ยนเป็นปลายทาง" = เปลี่ยนวิธีชำระ ไม่ใช่เปลี่ยนสินค้า
+  if (lower.includes('เปลี่ยน')) {
+    const recentText = recentContext.join(' ').toLowerCase();
+    if (ORDERING_CONTEXT_PATTERN.test(recentText)) return false;
+    // ถ้าข้อความมีคำว่า "ชำระ/โอน/ปลายทาง" เอง → ไม่ใช่เปลี่ยนสินค้า
+    if (ORDERING_CONTEXT_PATTERN.test(text)) return false;
+    return true;
+  }
+
+  return false;
 }
 
 // คำที่บ่งชี้ว่าลูกค้าเลือกจ่ายแบบโอน → ต้องส่งรูปเลขบัญชี
@@ -208,8 +228,9 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     const proto = host.includes('localhost') ? 'http' : 'https';
     const baseUrl = `${proto}://${host}`;
 
-    // ตรวจว่าลูกค้าถามเรื่องเปลี่ยนสินค้าหรือเปล่า
-    const sendExchangeImages = isExchangeRequest(userText);
+    // ตรวจว่าลูกค้าถามเรื่องเปลี่ยนสินค้าหรือเปล่า (ดู context ด้วย)
+    const contextForExchange = getRecentMessages(`line_${userId}`, 6);
+    const sendExchangeImages = isExchangeRequest(userText, contextForExchange);
 
     // ตรวจว่าลูกค้าเลือกจ่ายแบบโอน → ส่งรูปเลขบัญชี
     const sendPaymentImage = isTransferPayment(userText);
@@ -217,19 +238,25 @@ async function processEvents(body: Record<string, unknown>, req: NextRequest): P
     // ตรวจว่าลูกค้าถามเรื่องไซส์/สี/ขนาด และหารูปตารางไซส์ถ้ามี
     // ตัดสินใจส่งรูปตารางไซส์:
     // ✅ ส่ง: ลูกค้าพิมพ์ "ตารางไซส์" / รหัสรุ่น (IX9/IX10) / ตัวเลขรอบเอว (เช่น "32", "33")
-    // ❌ ไม่ส่ง: ลูกค้าเลือกสี (ดำ/ขาว/...) / เลือกชำระ (โอน/ปลายทาง) / คำสั่งซื้อ
+    // ❌ ไม่ส่ง: ลูกค้าเลือกสี / เลือกชำระ / คำสั่งซื้อ / สรุปยอด
     const recentContext = getRecentMessages(`line_${userId}`, 6);
     const trimmedText = userText.trim();
 
-    const isOrderAction =
-      /^(ดำ|ขาว|เขียว|กรม|เทา|ทราย|แดง|น้ำเงิน|เหลือง|ชมพู|ฟ้า|ส้ม|มัลติแคม)\s*$/i.test(trimmedText) ||
-      /(โอน|ปลายทาง|cod|transfer|ชำระ|จ่าย)/i.test(userText);
+    // ข้อความนี้มีคำบอกสีหรือเปล่า (ถ้ามี = กำลังสั่งซื้อ ไม่ควรส่งตารางไซส์)
+    const hasColorMention = /(ดำ|ขาว|เขียว|กรม|เทา|ทราย|แดง|น้ำเงิน|เหลือง|ชมพู|ฟ้า|ส้ม|มัลติแคม|ลายพราง|black|white|green|khaki|gray|grey|sand|tan|brown|navy|multicam)/i.test(userText);
+
+    // ข้อความมีคำกริยาสั่งซื้อ/ชำระ/จำนวน
+    const isOrderingMessage =
+      hasColorMention ||
+      /(เอา|สั่ง|สั่งซื้อ|จะซื้อ|อยากได้)/i.test(userText) ||
+      /(โอน|ปลายทาง|cod|transfer|ชำระ|จ่าย|สรุป|ยอดเรียกเก็บ)/i.test(userText) ||
+      /\d+\s*(ตัว|ชิ้น|อัน|คู่)/i.test(userText);
 
     const hasExplicitSizeKeyword = /(ตารางไซส์|ตารางขนาด|size\s*chart)/i.test(userText);
     const hasProductCode = /\b[A-Za-z]{2,4}\d{1,3}[A-Za-z]?\b/.test(userText);
     const isPureNumber = /^\s*\d{2}\s*(นิ้ว)?\s*$/.test(trimmedText);
 
-    const wantsSizeChart = !isOrderAction && (hasExplicitSizeKeyword || hasProductCode || isPureNumber);
+    const wantsSizeChart = !isOrderingMessage && (hasExplicitSizeKeyword || hasProductCode || isPureNumber);
 
     let sizeChartImageUrl: string | null = null;
     if (wantsSizeChart) {
